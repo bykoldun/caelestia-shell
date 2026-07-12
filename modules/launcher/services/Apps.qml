@@ -65,13 +65,16 @@ Searcher {
         const results = query(q).map(e => e.entry);
         if (flag === "t")
             return results.filter(a => a.runInTerminal);
-        if (flag === "g")
+        if (flag === "g") {
+            const exclude = ["steam", "steam (runtime)", "steam (native)", "lutris", "heroic games launcher", "heroic", "bottles", "itch", "moonlight"];
             return results.filter(a => {
+                if (exclude.includes(a.name.toLowerCase())) return false;
                 const cats = a.categories;
                 if (!cats) return false;
                 if (Array.isArray(cats)) return cats.some(c => c.toLowerCase().includes("game"));
                 return String(cats).toLowerCase().includes("game");
             });
+        }
         return results;
     }
 
