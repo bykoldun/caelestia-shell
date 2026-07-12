@@ -20,40 +20,50 @@ Searcher {
             entry.execute();
     }
 
-    function search(search: string): list<var> {
+    function search(searchString: string): list<var> {
         const prefix = GlobalConfig.launcher.specialPrefix;
+        
+        let flag = "";
+        let q = searchString.trim();
+        
+        if (q.startsWith(prefix) && q.length >= prefix.length + 1) {
+            const potentialFlag = q.substring(prefix.length, prefix.length + 1);
+            if (["i", "c", "d", "e", "w", "g", "k", "t"].includes(potentialFlag)) {
+                if (q.length === prefix.length + 1 || q[prefix.length + 1] === " ") {
+                    flag = potentialFlag;
+                    q = q.substring(prefix.length + 1).trim();
+                }
+            }
+        }
 
-        if (search.startsWith(`${prefix}i `)) {
+        if (flag === "i") {
             keys = ["id", "name"];
             weights = [0.9, 0.1];
-        } else if (search.startsWith(`${prefix}c `)) {
+        } else if (flag === "c") {
             keys = ["categories", "name"];
             weights = [0.9, 0.1];
-        } else if (search.startsWith(`${prefix}d `)) {
+        } else if (flag === "d") {
             keys = ["comment", "name"];
             weights = [0.9, 0.1];
-        } else if (search.startsWith(`${prefix}e `)) {
+        } else if (flag === "e") {
             keys = ["execString", "name"];
             weights = [0.9, 0.1];
-        } else if (search.startsWith(`${prefix}w `)) {
+        } else if (flag === "w") {
             keys = ["startupClass", "name"];
             weights = [0.9, 0.1];
-        } else if (search.startsWith(`${prefix}g `)) {
+        } else if (flag === "g") {
             keys = ["genericName", "name"];
             weights = [0.9, 0.1];
-        } else if (search.startsWith(`${prefix}k `)) {
+        } else if (flag === "k") {
             keys = ["keywords", "name"];
             weights = [0.9, 0.1];
         } else {
             keys = ["name"];
             weights = [1];
-
-            if (!search.startsWith(`${prefix}t `))
-                return query(search).map(e => e.entry);
         }
 
-        const results = query(search.slice(prefix.length + 2)).map(e => e.entry);
-        if (search.startsWith(`${prefix}t `))
+        const results = query(q).map(e => e.entry);
+        if (flag === "t")
             return results.filter(a => a.runInTerminal);
         return results;
     }
