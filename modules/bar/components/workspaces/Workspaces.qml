@@ -24,6 +24,7 @@ StyledClippingRect {
         return occ;
     }
     readonly property int groupOffset: Math.floor((activeWsId - 1) / Config.bar.workspaces.shown) * Config.bar.workspaces.shown
+    readonly property Item layoutItem: layout
 
     property real blur: onSpecial ? 1 : 0
 

@@ -72,6 +72,20 @@ ColumnLayout {
             popouts.currentName = id.toLowerCase();
             popouts.currentCenter = (ch.item as Item).mapToItem(root, 0, (ch.item as Item).implicitHeight / 2).y ?? 0;
             popouts.hasCurrent = true;
+        } else if (id === "workspaces") {
+            const layout = (ch.item as Item).layoutItem;
+            if (layout) {
+                const childY = layout.mapFromItem(root, 0, y).y;
+                const ws = layout.childAt(layout.width / 2, childY);
+                if (ws && ws.isWorkspace) {
+                    popouts.hoveredWs = ws.ws;
+                    popouts.currentName = "workspaces";
+                    popouts.currentCenter = ws.mapToItem(root, 0, ws.implicitHeight / 2).y ?? 0;
+                    popouts.hasCurrent = true;
+                } else {
+                    popouts.hasCurrent = false;
+                }
+            }
         }
     }
 

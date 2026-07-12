@@ -24,6 +24,13 @@ Item {
         anchors.margins: Tokens.padding.large
 
         Popout {
+            name: "workspaces"
+            sourceComponent: Workspaces {
+                popouts: root.popouts
+            }
+        }
+
+        Popout {
             name: "activewindow"
             sourceComponent: ActiveWindow {
                 popouts: root.popouts
