@@ -78,6 +78,10 @@ ColumnLayout {
                 const childY = layout.mapFromItem(root, 0, y).y;
                 const ws = layout.childAt(layout.width / 2, childY);
                 if (ws && ws.isWorkspace) {
+                    if (!ws.isOccupied && !Config.bar.workspaces.showEmptyWorkspacePreview) {
+                        popouts.hasCurrent = false;
+                        return;
+                    }
                     popouts.hoveredWs = ws.ws;
                     popouts.currentName = "workspaces";
                     popouts.currentCenter = ws.mapToItem(root, 0, ws.implicitHeight / 2).y ?? 0;
