@@ -6,11 +6,15 @@ import Quickshell
 import Quickshell.Services.SystemTray
 import Caelestia.Config
 import qs.components
+import "../../dashboard/dash" as Dash
 
 Item {
     id: root
 
     required property PopoutState popouts
+    required property ShellScreen screen
+    required property ScreenState screenState
+    
     readonly property Popout currentPopout: content.children.find(c => c.shouldBeActive) ?? null
     readonly property Item current: currentPopout?.item ?? null
 
@@ -126,6 +130,19 @@ Item {
         Popout {
             name: "kblayout"
             sourceComponent: KbLayout {}
+        }
+
+        Popout {
+            name: "clock"
+            sourceComponent: Item {
+                implicitWidth: 350
+                implicitHeight: cal.implicitHeight
+
+                Dash.Calendar {
+                    id: cal
+                    screenState: root.screenState
+                }
+            }
         }
 
         Popout {
