@@ -1,18 +1,23 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Layouts
 import Quickshell.Services.UPower
 import Caelestia.Config
 import qs.components
 import qs.services
 
-Column {
+ColumnLayout {
     id: root
 
     spacing: Tokens.spacing.medium
-    width: Tokens.sizes.bar.batteryWidth
+    implicitWidth: Math.max(Tokens.sizes.bar.batteryWidth, profiles.implicitWidth)
 
     StyledText {
+        Layout.rightMargin: Tokens.padding.extraSmall
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        wrapMode: Text.WordWrap
         text: UPower.displayDevice.isLaptopBattery ? qsTr("Remaining: %1%").arg(Math.round(UPower.displayDevice.percentage * 100)) : qsTr("No battery detected")
     }
 
@@ -33,16 +38,21 @@ Column {
             return comps.join(", ") || fallback;
         }
 
+        Layout.rightMargin: Tokens.padding.extraSmall
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        wrapMode: Text.WordWrap
         text: UPower.displayDevice.isLaptopBattery ? qsTr("Time %1: %2").arg(UPower.onBattery ? "remaining" : "until charged").arg(UPower.onBattery ? formatSeconds(UPower.displayDevice.timeToEmpty, "Calculating...") : formatSeconds(UPower.displayDevice.timeToFull, "Fully charged!")) : qsTr("Power profile: %1").arg(PowerProfile.toString(PowerProfiles.profile))
     }
 
     Loader {
+        Layout.rightMargin: Tokens.padding.extraSmall
         asynchronous: true
-        anchors.horizontalCenter: parent.horizontalCenter
+        Layout.alignment: Qt.AlignHCenter
 
         active: PowerProfiles.degradationReason !== PerformanceDegradationReason.None
 
-        height: active ? ((item as Item)?.implicitHeight ?? 0) : 0
+        Layout.preferredHeight: active ? ((item as Item)?.implicitHeight ?? 0) : 0
 
         sourceComponent: StyledRect {
             implicitWidth: child.implicitWidth + Tokens.padding.medium * 2
@@ -106,7 +116,8 @@ Column {
             return balance.icon;
         }
 
-        anchors.horizontalCenter: parent.horizontalCenter
+        Layout.rightMargin: Tokens.padding.extraSmall
+        Layout.alignment: Qt.AlignHCenter
 
         implicitWidth: saver.implicitHeight + balance.implicitHeight + perf.implicitHeight + Tokens.padding.medium * 2 + Tokens.spacing.largeIncreased * 2
         implicitHeight: Math.max(saver.implicitHeight, balance.implicitHeight, perf.implicitHeight) + Tokens.padding.small
