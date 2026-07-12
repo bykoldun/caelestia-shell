@@ -93,16 +93,4 @@ Searcher {
         favouriteApps: GlobalConfig.launcher.favouriteApps
         entries: DesktopEntries.applications.values.filter(a => !Strings.testRegexList(GlobalConfig.launcher.hiddenApps, a.id))
     }
-
-    IpcHandler {
-        target: "launcher"
-        
-        function launch(query: string, index: string): void {
-            const i = parseInt(index) - 1;
-            const results = root.search(query);
-            if (i >= 0 && i < results.length) {
-                root.launch(results[i]);
-            }
-        }
-    }
 }

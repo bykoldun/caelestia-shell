@@ -5,6 +5,7 @@ import Caelestia
 import qs.components.misc
 import qs.services
 import qs.modules.nexus
+import qs.modules.launcher.services
 
 Scope {
     id: root
@@ -161,6 +162,18 @@ Scope {
         }
 
         target: "toaster"
+    }
+
+    IpcHandler {
+        target: "launcher"
+        
+        function launch(query: string, index: string): void {
+            const i = parseInt(index) - 1;
+            const results = Apps.search(query);
+            if (i >= 0 && i < results.length) {
+                Apps.launch(results[i]);
+            }
+        }
     }
 
     LoggingCategory {
