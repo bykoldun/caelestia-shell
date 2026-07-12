@@ -50,32 +50,37 @@ Item {
             radius: Tokens.rounding.medium
 
             Item {
-                width: root.monWidth
-                height: root.monHeight
-                scale: root.previewScale
-                transformOrigin: Item.TopLeft
+                width: root.previewWidth
+                height: root.previewHeight
 
                 Repeater {
                     model: root.wsWindows
                     
                     Item {
                         property var ipcObj: modelData.lastIpcObject
-                        x: ipcObj.at ? (ipcObj.at[0] - root.monX) : 0
-                        y: ipcObj.at ? (ipcObj.at[1] - root.monY) : 0
-                        width: ipcObj.size ? ipcObj.size[0] : 0
-                        height: ipcObj.size ? ipcObj.size[1] : 0
+                        
+                        property real exactX: ipcObj.at ? (ipcObj.at[0] - root.monX) * root.previewScale : 0
+                        property real exactY: ipcObj.at ? (ipcObj.at[1] - root.monY) * root.previewScale : 0
+                        property real exactRight: ipcObj.at && ipcObj.size ? (ipcObj.at[0] - root.monX + ipcObj.size[0]) * root.previewScale : 0
+                        property real exactBottom: ipcObj.at && ipcObj.size ? (ipcObj.at[1] - root.monY + ipcObj.size[1]) * root.previewScale : 0
+                        
+                        x: Math.round(exactX)
+                        y: Math.round(exactY)
+                        width: Math.max(1, Math.round(exactRight) - Math.round(exactX))
+                        height: Math.max(1, Math.round(exactBottom) - Math.round(exactY))
+                        
+                        ScreencopyView {
+                            anchors.fill: parent
+                            captureSource: modelData.wayland ?? null
+                            live: visible
+                        }
                         
                         Rectangle {
                             anchors.fill: parent
-                            color: Colours.layer(Colours.palette.m3surface, 2)
-                            radius: Tokens.rounding.medium * (1 / root.previewScale)
-                            
-                            ScreencopyView {
-                                anchors.fill: parent
-                                anchors.margins: 4 * (1 / root.previewScale)
-                                captureSource: modelData.wayland ?? null
-                                live: visible
-                            }
+                            color: "transparent"
+                            border.color: Colours.layer(Colours.palette.m3surface, 2)
+                            border.width: 2
+                            radius: Tokens.rounding.medium
                         }
                     }
                 }
