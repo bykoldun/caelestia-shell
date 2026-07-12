@@ -16,6 +16,8 @@ Item {
     property alias radius: imgWrapper.radius
     property alias imgHeight: imgWrapper.implicitHeight
     property bool fillLabel: true
+    property bool isCategory: false
+    property string categoryIcon: "folder"
 
     signal clicked
 
@@ -84,6 +86,23 @@ Item {
                     }
                 }
             }
+
+            StyledRect {
+                anchors.fill: parent
+                color: Colours.palette.m3surfaceVariant
+                opacity: 0.7
+                visible: root.isCategory
+                radius: Tokens.rounding.largeIncreased
+            }
+
+            MaterialIcon {
+                anchors.centerIn: parent
+                text: root.categoryIcon
+                fontStyle: Tokens.font.icon.extraLarge
+                color: Colours.palette.m3onSurfaceVariant
+                visible: root.isCategory
+            }
+
         }
 
         StyledText {
@@ -101,5 +120,22 @@ Item {
     StateLayer {
         anchors.bottomMargin: root.fillLabel ? 0 : layout.implicitHeight - imgWrapper.implicitHeight
         onClicked: root.clicked()
+    }
+
+    IconButton {
+        anchors.top: layout.top
+        anchors.right: layout.right
+        anchors.margins: Tokens.spacing.small
+
+        visible: !root.isCategory
+        isToggle: true
+        checked: (root.modelData && Wallpapers.favorites.includes(root.modelData.path)) ? true : false
+        icon: checked ? "favorite" : "favorite_border"
+
+        onClicked: {
+            if (root.modelData?.path) {
+                Wallpapers.toggleFavorite(root.modelData.path);
+            }
+        }
     }
 }

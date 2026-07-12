@@ -2,15 +2,12 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
-import Caelestia.Components
 import Caelestia.Config
-import Caelestia.Models
+import Caelestia.Components
 import qs.components
 import qs.components.controls
 import qs.components.filedialog
 import qs.services
-import qs.utils
 import qs.modules.nexus.common
 
 PageBase {
@@ -21,7 +18,6 @@ PageBase {
 
     ColumnLayout {
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: parent.top
         width: root.cappedWidth
         spacing: Tokens.spacing.small
 
@@ -72,78 +68,87 @@ PageBase {
         WallItem {
             imgHeight: Math.round(width * 0.3)
             radius: Tokens.rounding.extraLarge
-            source: Quickshell.shellPath("assets/wallpaper.webp")
+            source: Wallpapers.fallback
             text: qsTr("Featured wallpaper")
             fillLabel: false
             onClicked: {
-                Wallpapers.setWallpaper(Quickshell.shellPath("assets/wallpaper.webp"));
+                Wallpapers.setWallpaper(Wallpapers.fallback);
                 root.nState.closeSubPage();
             }
         }
 
         StyledText {
             Layout.topMargin: Tokens.spacing.large
+            Layout.bottomMargin: Tokens.spacing.medium
             text: qsTr("Local wallpapers")
             font: Tokens.font.title.small
+            visible: categoriesGrid.count > 0
         }
 
         GridLayout {
             Layout.fillWidth: true
-            visible: localWalls.count > 0
+            visible: categoriesGrid.count > 0
 
             columns: Config.nexus.wallpapersPerRow
             rowSpacing: Tokens.spacing.medium
             columnSpacing: Tokens.spacing.large
 
             Repeater {
-                id: localWalls
+                id: categoriesGrid
 
                 model: {
                     const walls = Wallpapers.list;
-                    const baseDir = Paths.wallsdir;
                     const categories = {};
-                    const list = [];
                     for (const w of walls) {
-                        if (w.parentDir !== baseDir) {
-                            const category = Wallpapers.getCategoryFor(w);
-                            if (category && (!(category in categories) || categories[category].name.localeCompare(w.name) > 0))
-                                categories[category] = w;
-                        } else {
-                            list.push(w);
+                        if (Wallpapers.favorites.includes(w.path)) {
+                            if (!("Favorites" in categories)) {
+                                categories["Favorites"] = {
+                                    isCategory: true,
+                                    name: "Favorites",
+                                    path: w.path,
+                                    parentDir: w.parentDir
+                                };
+                            }
+                        }
+
+                        let categoryName = Wallpapers.getCategoryFor(w);
+                        if (!categoryName) categoryName = "Pictures";
+                        
+                        if (!(categoryName in categories) || categories[categoryName].name.localeCompare(w.name) > 0) {
+                            categories[categoryName] = {
+                                isCategory: true,
+                                name: categoryName,
+                                path: w.path,
+                                parentDir: w.parentDir
+                            };
                         }
                     }
-                    list.push(...Object.values(categories));
-                    list.sort((a, b) => ((a.parentDir === baseDir) - (b.parentDir === baseDir)) || a.name.localeCompare(b.name));
+                    const list = Object.values(categories).sort((a, b) => a.name.localeCompare(b.name));
                     while (list.length < Config.nexus.wallpapersPerRow)
                         list.push(null);
                     return list;
                 }
 
                 WallItem {
-                    required property FileSystemEntry modelData
+                    required property var modelData
 
-                    // Empty placeholders for sizing
+                    Layout.fillWidth: true
+                    
                     opacity: modelData ? 1 : 0
                     enabled: modelData
 
-                    source: String(modelData?.path ?? "")
+                    source: Wallpapers.getPreviewFor(modelData?.path ?? "")
+                    isCategory: modelData?.isCategory ?? false
+                    categoryIcon: modelData?.name === "Favorites" ? "favorite" : "folder"
                     text: {
                         if (!modelData)
                             return "";
-
-                        if (modelData.parentDir !== Paths.wallsdir) {
-                            const category = Wallpapers.getCategoryFor(modelData);
-                            return category.slice(0, 1).toUpperCase() + category.slice(1);
-                        }
-                        return modelData.name;
+                        return modelData.name.slice(0, 1).toUpperCase() + modelData.name.slice(1);
                     }
                     onClicked: {
-                        if (modelData.parentDir !== Paths.wallsdir) {
-                            root.nState.selectedWallpaperCategory = Wallpapers.getCategoryFor(modelData);
-                            root.nState.openSubPage(2); // Category page
-                        } else {
-                            Wallpapers.setWallpaper(modelData.path);
-                            root.nState.closeSubPage();
+                        if (modelData) {
+                            root.nState.selectedWallpaperCategory = modelData.name;
+                            root.nState.openSubPage(2);
                         }
                     }
                 }
@@ -152,9 +157,8 @@ PageBase {
 
         Loader {
             Layout.fillWidth: true
-
             asynchronous: true
-            active: localWalls.count === 0
+            active: categoriesGrid.count === 0
             visible: active
 
             sourceComponent: StyledRect {
@@ -164,7 +168,6 @@ PageBase {
 
                 ColumnLayout {
                     id: noWallsLayout
-
                     anchors.centerIn: parent
                     spacing: Tokens.spacing.extraSmall
 

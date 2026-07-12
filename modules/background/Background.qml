@@ -19,8 +19,15 @@ Variants {
         screen: modelData
         name: "background"
         WlrLayershell.exclusionMode: ExclusionMode.Ignore
-        WlrLayershell.layer: contentItem.Config.background.wallpaperEnabled ? WlrLayer.Background : WlrLayer.Bottom
-        color: contentItem.Config.background.wallpaperEnabled ? "black" : "transparent"
+        
+        property bool isVideo: {
+            const ext = Wallpapers.actualCurrent.split('.').pop().toLowerCase();
+            return ["mp4", "webm", "mkv", "avi"].includes(ext);
+        }
+        property bool showWallpaper: contentItem.Config.background.wallpaperEnabled && !isVideo
+        
+        WlrLayershell.layer: showWallpaper ? WlrLayer.Background : WlrLayer.Bottom
+        color: showWallpaper ? "black" : "transparent"
         surfaceFormat.opaque: false
 
         anchors.top: true
@@ -45,7 +52,7 @@ Variants {
                 asynchronous: true
 
                 anchors.fill: parent
-                active: Config.background.wallpaperEnabled
+                active: win.showWallpaper
 
                 sourceComponent: Wallpaper {}
             }

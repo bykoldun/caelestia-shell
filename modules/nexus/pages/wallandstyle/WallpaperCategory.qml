@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Controls
 import Caelestia.Config
 import Caelestia.Models
 import qs.services
@@ -16,37 +17,76 @@ PageBase {
     }
     isSubPage: true
 
-    GridLayout {
+    Component.onCompleted: root.flickable.interactive = false
+
+    ListView {
+        id: listView
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: parent.top
         width: root.cappedWidth
+        implicitHeight: root.flickable.height - root.flickable.topMargin - root.flickable.bottomMargin // Perfectly fit viewport without clipping
 
-        columns: Config.nexus.wallpapersPerRow
-        rowSpacing: Tokens.spacing.medium
-        columnSpacing: Tokens.spacing.large
+        boundsBehavior: Flickable.StopAtBounds
+        clip: true
+        ScrollBar.vertical: ScrollBar {}
 
-        Repeater {
-            model: {
-                const walls = Wallpapers.list.filter(w => Wallpapers.getCategoryFor(w) === root.nState.selectedWallpaperCategory).sort((a, b) => a.name.localeCompare(b.name));
-                while (walls.length < Config.nexus.wallpapersPerRow)
-                    walls.push(null);
-                return walls;
+        WheelHandler {
+            onWheel: (event) => {
+                listView.contentY -= event.angleDelta.y;
+                if (listView.contentY < 0) listView.contentY = 0;
+                const maxContentY = Math.max(0, listView.contentHeight - listView.height);
+                if (listView.contentY > maxContentY) listView.contentY = maxContentY;
             }
+        }
 
-            WallItem {
-                required property FileSystemEntry modelData
+        spacing: Tokens.spacing.medium
 
-                // Empty placeholders for sizing
-                opacity: modelData ? 1 : 0
-                enabled: modelData
+        model: {
+            let walls = [];
+            if (root.nState.selectedWallpaperCategory === "Favorites") {
+                walls = Wallpapers.list.filter(w => Wallpapers.favorites.includes(w.path));
+            } else {
+                walls = Wallpapers.list.filter(w => Wallpapers.getCategoryFor(w) === root.nState.selectedWallpaperCategory);
+            }
+            walls = walls.sort((a, b) => a.name.localeCompare(b.name));
+            
+            const chunked = [];
+            const rowSize = Config.nexus.wallpapersPerRow;
+            for (let i = 0; i < walls.length; i += rowSize) {
+                chunked.push(walls.slice(i, i + rowSize));
+            }
+            return chunked;
+        }
 
-                source: String(modelData?.path ?? "")
-                text: modelData?.name ?? ""
-                onClicked: {
-                    Wallpapers.setWallpaper(modelData.path);
-                    root.nState.closeSubPage();
-                    root.nState.closeSubPage();
+        delegate: RowLayout {
+            id: rowDelegate
+            required property var modelData
+            width: listView.width
+            spacing: Tokens.spacing.large
+
+            Repeater {
+                model: rowDelegate.modelData
+
+                WallItem {
+                    required property var modelData
+                    
+                    Layout.fillWidth: true
+                    
+                    opacity: modelData ? 1 : 0
+                    enabled: modelData
+
+                    source: Wallpapers.getPreviewFor(modelData?.path ?? "")
+                    text: (modelData && Wallpapers.wpEngineTitles[modelData.path]) ? Wallpapers.wpEngineTitles[modelData.path] : (modelData?.relativePath ?? modelData?.name ?? "")
+                    onClicked: {
+                        Wallpapers.setWallpaper(modelData.path);
+                        root.nState.closeSubPage();
+                        root.nState.closeSubPage();
+                    }
                 }
+            }
+            
+            Repeater {
+                model: Config.nexus.wallpapersPerRow - rowDelegate.modelData.length
+                Item { Layout.fillWidth: true } // Empty placeholders
             }
         }
     }

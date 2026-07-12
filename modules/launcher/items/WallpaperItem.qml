@@ -3,6 +3,7 @@ import Quickshell
 import Caelestia.Config
 import Caelestia.Models
 import qs.components
+import qs.components.controls
 import qs.components.effects
 import qs.components.images
 import qs.services
@@ -10,7 +11,7 @@ import qs.services
 Item {
     id: root
 
-    required property FileSystemEntry modelData
+    required property var modelData
     required property ScreenState screenState
 
     scale: 0.5
@@ -65,12 +66,39 @@ Item {
         }
 
         CachingImage {
+            property bool isVideo: {
+                const ext = root.modelData.path.split('.').pop().toLowerCase();
+                return ["mp4", "webm", "mkv", "avi"].includes(ext);
+            }
+            property string videoThumb: {
+                if (!isVideo) return "";
+                if (Wallpapers.wpEnginePreviews[root.modelData.path]) return Wallpapers.wpEnginePreviews[root.modelData.path];
+                const preview = Wallpapers.allWallpapers.find(e => e && e.parentDir === root.modelData.parentDir && (e.name.startsWith("preview.") || e.name.startsWith("thumbnail.")));
+                return preview ? preview.path : (root.modelData.parentDir + "/preview.jpg");
+            }
+            
             anchors.fill: parent
-            path: root.modelData.path
+            path: isVideo ? videoThumb : root.modelData.path
             smooth: !root.PathView.view.moving
             sourceSize: {
                 const dpr = (QsWindow.window as QsWindow)?.devicePixelRatio ?? 1;
                 return Qt.size(image.implicitWidth * dpr, image.implicitHeight * dpr);
+            }
+        }
+
+        IconButton {
+            anchors.top: parent.top
+            anchors.right: parent.right
+            anchors.margins: Tokens.spacing.small
+
+            isToggle: true
+            checked: (root.modelData && Wallpapers.favorites.includes(root.modelData.path)) ? true : false
+            icon: checked ? "favorite" : "favorite_border"
+
+            onClicked: {
+                if (root.modelData?.path) {
+                    Wallpapers.toggleFavorite(root.modelData.path);
+                }
             }
         }
     }
@@ -86,7 +114,7 @@ Item {
         horizontalAlignment: Text.AlignHCenter
         elide: Text.ElideRight
         renderType: Text.QtRendering
-        text: root.modelData.relativePath
+        text: Wallpapers.wpEngineTitles[root.modelData.path] || root.modelData.relativePath
         font: Tokens.font.label.medium
     }
 
