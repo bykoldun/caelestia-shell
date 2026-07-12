@@ -52,8 +52,8 @@ Searcher {
             keys = ["startupClass", "name"];
             weights = [0.9, 0.1];
         } else if (flag === "g") {
-            keys = ["genericName", "name"];
-            weights = [0.9, 0.1];
+            keys = ["name"];
+            weights = [1];
         } else if (flag === "k") {
             keys = ["keywords", "name"];
             weights = [0.9, 0.1];
@@ -65,6 +65,13 @@ Searcher {
         const results = query(q).map(e => e.entry);
         if (flag === "t")
             return results.filter(a => a.runInTerminal);
+        if (flag === "g")
+            return results.filter(a => {
+                const cats = a.categories;
+                if (!cats) return false;
+                if (Array.isArray(cats)) return cats.some(c => c.toLowerCase().includes("game"));
+                return String(cats).toLowerCase().includes("game");
+            });
         return results;
     }
 
