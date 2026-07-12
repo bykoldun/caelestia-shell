@@ -66,13 +66,14 @@ Searcher {
         if (flag === "t")
             return results.filter(a => a.runInTerminal);
         if (flag === "g") {
-            const exclude = ["steam", "steam (runtime)", "steam (native)", "lutris", "heroic games launcher", "heroic", "bottles", "itch", "moonlight"];
+            const excludeCats = ["utility", "network", "filetransfer", "emulator", "settings", "system"];
             return results.filter(a => {
-                if (exclude.includes(a.name.toLowerCase())) return false;
                 const cats = a.categories;
                 if (!cats) return false;
-                if (Array.isArray(cats)) return cats.some(c => c.toLowerCase().includes("game"));
-                return String(cats).toLowerCase().includes("game");
+                const catArray = Array.isArray(cats) ? cats : String(cats).split(";");
+                const isGame = catArray.some(c => c.toLowerCase().includes("game"));
+                const isLauncher = catArray.some(c => excludeCats.some(e => c.toLowerCase().includes(e)));
+                return isGame && !isLauncher;
             });
         }
         return results;
